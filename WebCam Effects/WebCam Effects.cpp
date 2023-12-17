@@ -21,10 +21,13 @@ int main(int argc, char** argv)
 	createTrackbar("Trackbar", "Original Image", &alpha_slider, 255, on_trackbar);
 	Mat srcframe, dstframe;
 	char key=' ', effect=' ';
-	Size blur(0,0);			// Gaussian Bluer Kernel
-	double filters[7] = {0};	// Array to check wich filters are activated 
-							// (if contrast and brightness are higher than zero, 
+	Size blur(0,0);				// Gaussian Bluer Kernel
+	double filters[11] = {0};	// Array to check wich filters are activated 
+								// (if contrast and brightness are higher than zero, 
 	filters[4] = D_CONTRAST;
+
+	VideoWriter video;
+	int record=0;
 
 	for (;;)
 	{
@@ -82,7 +85,41 @@ int main(int argc, char** argv)
 				effect = ' ';
 				break;
 
+			case 'O':
+				filters[7] = !filters[7];
+				effect = ' ';
+				break;
+
+			case 'T':
+				filters[8] +=1;
+				if (filters[8] == 4) filters[8] = 0;
+				effect = ' ';
+				break;
+
+			case 'H':
+				filters[9] = !filters[9];
+				effect = ' ';
+				break;
+
+			case 'V':
+				filters[10] = !filters[10];
+				effect = ' ';
+				break;
+
+			case 'R':
+				if (record)
+					video.release();			//finish video recording
+				else {
+					video = VideoWriter("webcamvideo.mp4", VideoWriter::fourcc('m', 'p', '4', 'v'), 10, Size(dstframe.cols, dstframe.rows), true);
+				}
+				record = !record;
+				effect = ' ';
+				break;
+
 		}
+
+		if (filters[7])
+			resize(dstframe,dstframe,Size(dstframe.cols /2,dstframe.rows/2));
 
 		if (filters[0])
 			GaussianBlur(dstframe, dstframe, blur, 0);
@@ -96,16 +133,32 @@ int main(int argc, char** argv)
 		if (filters[5])
 			dstframe.convertTo(dstframe, 16, -1, 255);
 
+		if (filters[9])
+			flip(dstframe, dstframe, 1);
+
+		if (filters[10])
+			flip(dstframe, dstframe, 0);
+
+		if (filters[8])
+			rotate(dstframe, dstframe, filters[8] - 1);
+
 		if (filters[1]) {
 			cvtColor(dstframe, dstframe, COLOR_BGR2GRAY);
 			Canny(dstframe, dstframe, 100, 200);
+			cvtColor(dstframe, dstframe, COLOR_GRAY2BGR);
 		}
 		else if (filters[2]) {
 			cvtColor(dstframe, dstframe, COLOR_BGR2GRAY);
 			Sobel(dstframe, dstframe, 0, 1, 1, 5);
+			cvtColor(dstframe, dstframe, COLOR_GRAY2BGR);
 		}
-		else if (filters[6])
+		else if (filters[6]) {
 			cvtColor(dstframe, dstframe, COLOR_BGR2GRAY);
+			cvtColor(dstframe, dstframe, COLOR_GRAY2BGR);
+		}
+
+		if (record)
+			video.write(dstframe);
 
 		imshow("Original Image", srcframe); imshow("New Image", dstframe);
 		
