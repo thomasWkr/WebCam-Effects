@@ -8,7 +8,7 @@ static void on_trackbar(int, void*){}
 
 int main(int argc, char** argv)
 {
-	int camera = 1;
+	int camera = 0; // Here you put the index of your WebCam (usually 0)
 	VideoCapture cap;
 	if (!cap.open(camera))
 		return 0;
